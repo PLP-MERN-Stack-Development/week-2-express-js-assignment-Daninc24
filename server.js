@@ -1,5 +1,7 @@
 // server.js - Starter Express server for Week 2 assignment
 
+
+
 // Import required modules
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -47,10 +49,53 @@ app.get('/', (req, res) => {
 
 // TODO: Implement the following routes:
 // GET /api/products - Get all products
+app.get('/api/products', (req, res) => {
+  res.json(products);
+});
+
+
 // GET /api/products/:id - Get a specific product
+app.get('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+  const product = products.find(p => p.id === productId);
+  if (product) {
+    res.json(product);
+  } else {
+    res.status(404).json({ error: 'Product not found' });
+  }
+});
+
 // POST /api/products - Create a new product
+
+app.post('/api/products', (req, res) => {
+  const newProduct = req.body;
+  newProduct.id = uuidv4();
+  products.push(newProduct);
+  res.status(201).json(newProduct);
+});
+
+
 // PUT /api/products/:id - Update a product
+
+app.put('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+  const updatedProduct = req.body;
+  const index = products.findIndex(p => p.id === productId);
+  if (index !== -1) {
+    products[index] = { ...products[index], ...updatedProduct };
+    res.json(products[index]);
+  } else {
+    res.status(404).json({ error: 'Product not found' });
+  }
+});
+  
 // DELETE /api/products/:id - Delete a product
+
+app.delete('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+  products = products.filter(p => p.id !== productId);
+  res.status(204).send(); // No content
+});
 
 // Example route implementation for GET /api/products
 app.get('/api/products', (req, res) => {
@@ -59,8 +104,27 @@ app.get('/api/products', (req, res) => {
 
 // TODO: Implement custom middleware for:
 // - Request logging
+ app.use((req, res, next) => {
+  console.log(`Received ${req.method} request to ${req.url}`);
+  next();
+});
+
 // - Authentication
+app.use((req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== 'Bearer my-secret-token') {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+});
+
+
 // - Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something went wrong!');
+});
+
 
 // Start the server
 app.listen(PORT, () => {
